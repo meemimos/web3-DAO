@@ -3,16 +3,17 @@ import "./pages.css";
 import sampleProposals from '../sampleProposals';
 import { Tab, TabList, Widget, Tag, Table, Form } from "web3uikit";
 import { Link } from 'react-router-dom';
-import { useMoralis } from "react-moralis";
+import { useMoralis, useMoralisWeb3Api } from "react-moralis";
 
 const Home = () => {
 
   const [passRate, setPassRate] = useState(0);
   const [totalP, setTotalP] = useState(0);
   const [counted, setCounted] = useState(0);
+  const [voters, setVoters] = useState(0);
   const { Moralis, isInitialized } = useMoralis();
-  const [proposals, setProposals] = useState(sampleProposals);
-
+  const [proposals, setProposals] = useState([]);
+  const Web3Api = useMoralisWeb3Api();
 
   async function getStatus(proposalId) {
     const ProposalCounts = Moralis.Object.extend("ProposalCounts");
@@ -78,6 +79,20 @@ const Home = () => {
         setPassRate((votesUp/results.length) * 100);
       }
 
+      const fetchTokenIdOwners = async () => {
+        const options = {
+          address: "0x2953399124F0cBB46d2CbACD8A89cF0599974963",
+          token_id:
+            "49947751946628389830144382296876621757213005892257042905149060383620550623242",
+          chain: "mumbai"
+        };
+        const tokenIdOwners = await Web3Api.token.getTokenIdOwners(options);
+        const address = tokenIdOwners.result.map((e) => e.owner_of);
+        console.table(voters, address)
+        setVoters(address);
+      }
+
+      fetchTokenIdOwners();
       getProposals();
       passRate();
 
@@ -108,7 +123,7 @@ const Home = () => {
                       </div>
                     </div>
                   </Widget>
-                  <Widget info={423} title="Eligible voters"/>
+                  <Widget info={voters.length} title="Eligible voters"/>
                   <Widget info={totalP - counted} title="Ongoing proposals"/>
                 </div>
                 Recent proposals

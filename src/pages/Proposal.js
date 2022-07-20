@@ -2,11 +2,63 @@ import React, { useState, useEffect } from "react";
 import "./pages.css";
 import { Tag, Widget, Blockie, Tooltip, Icon, Form, Table } from "web3uikit";
 import { Link } from 'react-router-dom';
-import sampleVotes from '../sampleVotes';
+import { useLocation } from "react-router-dom";
+import { useMoralis } from "react-moralis";
 
 const Proposal = () => {
 
-  const [votes, setVotes] = useState(sampleVotes);
+  const { state: proposalDetails } = useLocation();
+  const { Moralis, isInitialized } = useMoralis();
+  const [latestVote, setLatestVote] = useState(0);
+  const [percUp, setPercUp] = useState(0);
+  const [percDown, setPercDown] = useState(0);
+  const [votes, setVotes] = useState([]);
+
+
+  useEffect(() => {
+    if(isInitialized) {
+
+      async function getVotes() {
+        const Votes = Moralis.Object.extend("Votes");
+        const query = new Moralis.Query(Votes);
+        query.equalTo("proposal", proposalDetails.id);
+        query.descending("createdAt");
+        const results = await query.find();
+        console.log(results);
+        if(results.length > 0) {
+          setLatestVote(results[0].attributes);
+          setPercDown(
+            (
+              (Number(results[0].attributes.votesDown) /
+                (Number(results[0].attributes.votesDown) + 
+                  (Number(results[0].attributes.votesUp)))) *
+              100
+            ).toFixed(0)
+          );
+          setPercUp(
+            (
+              (Number(results[0].attributes.votesUp) /
+                (Number(results[0].attributes.votesDown) + 
+                  (Number(results[0].attributes.votesUp)))) *
+              100
+            ).toFixed(0)
+          );
+        }
+
+        const votesDirection = results.map((e) => [
+          e.attributes.voter,
+          <Icon 
+            fill={e.attributes.votedFor ? "#2cc40a" : "#d93d3d"}
+            size={24}
+            svg={e.attributes.votedFor ? "checkmark" : "arrowCircleDown"}
+          />,
+        ]);
+
+        setVotes(votesDirection)
+      }
+      getVotes();
+    }
+  }, [isInitialized])
 
   return (
     <>
@@ -18,43 +70,43 @@ const Proposal = () => {
               Overview
             </div>
           </Link>
-          <div>Should we accept Elon Musk $44b offer for our DAO?</div>
+          <div>{ proposalDetails.description }</div>
           <div className="proposalOverview">
-            <Tag color={"red"} text={"Rejected"} />
+            <Tag color={proposalDetails.color} text={proposalDetails.text} />
             <div className="proposer">
               <span>Proposed By</span>
-              <Tooltip content={"0x6E6D6cff559DA117eA8e11bb1cCE027F3442AEeD"}>
-                <Blockie seed={"0x6E6D6cff559DA117eA8e11bb1cCE027F3442AEeD"} />
+              <Tooltip content={proposalDetails.proposer}>
+                <Blockie seed={proposalDetails.proposer} />
               </Tooltip>
             </div>
           </div>
         </div>
-
-        <div className="widgets">
-          <Widget info={10} title="Votes for">
-            <div className="extraWidgetInfo">
-              <div className="extraTitle">{25}%</div>
-              <div className="progress">
-                <div 
-                  className="progressPercentage"
-                  style={{width: `${25}%`}}>
+        {latestVote && (
+          <div className="widgets">
+            <Widget info={latestVote.votesUp} title="Votes for">
+              <div className="extraWidgetInfo">
+                <div className="extraTitle">{percUp}%</div>
+                <div className="progress">
+                  <div 
+                    className="progressPercentage"
+                    style={{width: `${percUp}%`}}>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Widget>
-          <Widget info={30} title="Votes against">
-            <div className="extraWidgetInfo">
-              <div className="extraTitle" style={{color: 'red'}}>{75}%</div>
-              <div className="progress">
-                <div 
-                  className="progressPercentage"
-                  style={{width: `${75}%`, backgroundColor: 'red'}}>
+            </Widget>
+            <Widget info={latestVote.votesDown} title="Votes against">
+              <div className="extraWidgetInfo">
+                <div className="extraTitle" style={{color: 'red'}}>{percDown}%</div>
+                <div className="progress">
+                  <div 
+                    className="progressPercentage"
+                    style={{width: `${percDown}%`, backgroundColor: 'red'}}>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Widget>
-        </div>
-
+            </Widget>
+          </div>
+        )}
         <div className="votesDiv">
           <Table
             style={{width: "60%"}}
