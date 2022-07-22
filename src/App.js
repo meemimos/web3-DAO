@@ -10,7 +10,7 @@ const App = () => {
   return (
     <>
     <div className="header">
-      <img width="160px" src={moralisLogo} alt="logo"/>
+      <a href="/"><img width="160px" src={moralisLogo} alt="logo"/></a>
       <ConnectButton/>
     </div>
       <Routes>
