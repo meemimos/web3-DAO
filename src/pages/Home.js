@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./pages.css";
-import sampleProposals from '../sampleProposals';
 import { Tab, TabList, Widget, Tag, Table, Form } from "web3uikit";
 import { Link } from 'react-router-dom';
-import { useMoralis, useMoralisWeb3Api } from "react-moralis";
+import { useMoralis, useMoralisWeb3Api, useWeb3ExecuteFunction } from "react-moralis";
 
 const Home = () => {
 
@@ -14,6 +13,51 @@ const Home = () => {
   const { Moralis, isInitialized } = useMoralis();
   const [proposals, setProposals] = useState([]);
   const Web3Api = useMoralisWeb3Api();
+  const [sub, setSub] = useState();
+  const contractProcessor = useWeb3ExecuteFunction();
+
+  async function createProposal(newProposal) {
+    let options = {
+      contractAddress: "0x2977343b18254C555ED86dAe95717990716E92A9",
+      functionName: "createProposal",
+      abi: [
+          {
+            "inputs":[
+              {
+                "internalType":"string",
+                "name":"_description",
+                "type":"string"
+              },
+              {
+                "internalType":"address[]",
+                "name":"_canVote",
+                "type":"address[]"
+              }
+            ],
+            "name":"createProposal",
+            "outputs":[],
+            "stateMutability":"nonpayable",
+            "type":"function"
+          }
+      ],
+      params: {
+        _description: newProposal,
+        _canVote: voters,
+      }
+    };
+
+    await contractProcessor.fetch({
+      params: options,
+      onSuccess: () => {
+        console.log("Proposal successfull.");
+        setSub(false);
+      },
+      onError: (error) => {
+        alert(error.data.message);
+        setSub(false);
+      }
+    })
+  }
 
   async function getStatus(proposalId) {
     const ProposalCounts = Moralis.Object.extend("ProposalCounts");
@@ -142,7 +186,7 @@ const Home = () => {
                 </div>
                 <Form 
                   buttonConfig={{
-                    isLoading: false,
+                    isLoading: sub,
                     loadingText: "Submitting proposal",
                     text: "Submit",
                     theme: "secondary",
@@ -159,7 +203,8 @@ const Home = () => {
                     },
                   ]}
                   onSubmit={(e) => {
-                    alert('Proposal Submitted')
+                    setSub(true);
+                    createProposal(e.data[0].inputResult);
                   }}
                   title="Create a New Proposal"
                 />
