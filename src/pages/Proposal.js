@@ -25,7 +25,7 @@ const Proposal = () => {
         query.equalTo("proposal", proposalDetails.id);
         query.descending("createdAt");
         const results = await query.find();
-        console.log(results);
+        // console.log(results);
         if(results.length > 0) {
           setLatestVote(results[0].attributes);
           setPercDown(
@@ -189,7 +189,7 @@ const Proposal = () => {
               },
             ]}
             onSubmit={(e) => {
-              if(e.data[0].inputResult[0] === 'For') {
+              if(e.data[0]?.inputResult[0] === 'For') {
                 castVote(true);
               } else {
                 castVote(false);

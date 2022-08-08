@@ -49,7 +49,7 @@ const Home = () => {
     await contractProcessor.fetch({
       params: options,
       onSuccess: () => {
-        console.log("Proposal successfull.");
+        console.log("Proposal successfully created.");
         setSub(false);
       },
       onError: (error) => {
@@ -64,7 +64,7 @@ const Home = () => {
     const query = new Moralis.Query(ProposalCounts);
     query.equalTo("uid", proposalId);
     const result = await query.first();
-    console.log(result);
+    // console.log(result);
 
     if(result !== undefined) {
       if(result.attributes.passed) {
@@ -132,7 +132,7 @@ const Home = () => {
         };
         const tokenIdOwners = await Web3Api.token.getTokenIdOwners(options);
         const address = tokenIdOwners.result.map((e) => e.owner_of);
-        console.table(voters, address)
+        // console.table(voters, address)
         setVoters(address);
       }
 
@@ -167,12 +167,12 @@ const Home = () => {
                       </div>
                     </div>
                   </Widget>
-                  <Widget info={voters.length} title="Eligible voters"/>
-                  <Widget info={totalP - counted} title="Ongoing proposals"/>
+                  <Widget info={voters ? voters.length : 0} title="Eligible voters"/>
+                  <Widget info={totalP ? (totalP - counted) : 0} title="Ongoing proposals"/>
                 </div>
                 Recent proposals
                 <div style={{marginTop: "30px"}}>
-                {console.log(proposals)}
+                {/* {console.log(proposals)} */}
                   <Table
                     columnsConfig="10% 70% 20%"
                     data={proposals}
@@ -181,7 +181,7 @@ const Home = () => {
                       <span>Description</span>,
                       <span>Status</span>,
                     ]}
-                    pageSize={3}
+                    pageSize={5}
                   />
                 </div>
                 <Form 
